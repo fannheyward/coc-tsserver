@@ -1,6 +1,6 @@
 {
   "name": "coc-tsserver",
-  "version": "2.2.4",
+  "version": "2.3.1",
   "description": "javascript and typescript language features extension of coc.nvim",
   "main": "lib/index.js",
   "publisher": "chemzqm",
@@ -210,6 +210,15 @@
           "markdownDescription": "Specifies the folder path to the tsserver and `lib*.d.ts` files under a TypeScript install to use for IntelliSense, for example: `./node_modules/typescript/lib`.\n\n- When specified as a user setting, the TypeScript version from `tsserver.tsdk` automatically replaces the built-in TypeScript version.\n- When specified as a workspace setting, the tsserver is used when `tsserver.useLocalTsdk` is true.\nUse command `:CocCommand tsserver.chooseVersion` to choose different typescript version.",
           "scope": "resource"
         },
+        "tsserver.socketPath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "markdownDescription": "Socket path used to connect to tsserver, the socket should be opened already (use tools like socat to start server and pipe messages to sdtio of tsserver), when exists, command line arguments related configurations wont' works. Configure the path like \"127.0.0.1:7070\"",
+          "scope": "resource"
+        },
         "tsserver.npm": {
           "type": "string",
           "default": "",
@@ -346,6 +355,22 @@
             "Don't use a dedicated syntax server. Use a single server to handle all IntelliSense operations.",
             "Spawn both a full server and a lighter weight server dedicated to syntax operations. The syntax server is used to speed up syntax operations and provide IntelliSense while projects are loading."
           ]
+        },
+        "tsserver.disabledSchemes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "git",
+            "fugitive",
+            "vsls",
+            "diffview",
+            "github",
+            "azurerepos"
+          ],
+          "markdownDescription": "Document schemes that should be disabled for tsserver to avoid tsserver error.",
+          "scope": "application"
         },
         "tsserver.experimental.enableProjectDiagnostics": {
           "type": "boolean",
@@ -498,6 +523,12 @@
             "type": "string"
           },
           "markdownDescription": "Specify glob patterns of files to exclude from auto imports. Requires using TypeScript 4.8 or newer in the workspace.",
+          "scope": "resource"
+        },
+        "typescript.preferences.preferTypeOnlyAutoImports": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Include the `type` keyword in auto-imports whenever possible. Requires using TypeScript 5.3+ in the workspace.",
           "scope": "resource"
         },
         "typescript.preferences.renameShorthandProperties": {
@@ -1201,6 +1232,6 @@
     "which": "^2.0.2"
   },
   "dependencies": {
-    "typescript": "^5.3.2"
+    "typescript": "^5.8.3"
   }
 }

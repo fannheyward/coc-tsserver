@@ -2,16 +2,16 @@
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { Uri, disposeAll, DidChangeTextDocumentParams, workspace } from 'coc.nvim'
-import { CancellationTokenSource, CancellationToken, Emitter, Event, Disposable, TextDocumentContentChangeEvent } from 'vscode-languageserver-protocol'
-import { TextDocument } from 'coc.nvim'
+import { DidChangeTextDocumentParams, TextDocument, Uri, disposeAll, window, workspace } from 'coc.nvim'
+import path from 'path'
+import { CancellationToken, CancellationTokenSource, Disposable, Emitter, Event, TextDocumentContentChangeEvent } from 'vscode-languageserver-protocol'
 import Proto from '../protocol'
 import { ClientCapability, ITypeScriptServiceClient } from '../typescriptService'
 import API from '../utils/api'
 import { Delayer } from '../utils/async'
-import * as typeConverters from '../utils/typeConverters'
 import { mode2ScriptKind } from '../utils/languageModeIds'
 import { ResourceMap } from '../utils/resourceMap'
+import * as typeConverters from '../utils/typeConverters'
 
 const enum BufferKind {
   TypeScript = 1,
@@ -49,6 +49,24 @@ class ChangeOperation {
 
 type BufferOperation = CloseOperation | OpenOperation | ChangeOperation
 
+let warningShown = false
+
+function checkDocument(doc: { uri: string, languageId: string }): void {
+  if (warningShown) return
+  const { uri, languageId } = doc
+  if ((uri.endsWith('.jsx') && languageId !== 'javascriptreact')
+    || (uri.endsWith('.tsx') && languageId !== 'typescriptreact')) {
+    let u = Uri.parse(doc.uri)
+    let basename = path.basename(u.fsPath)
+    if (doc.uri.endsWith('.jsx')) {
+      window.showWarningMessage(`Possible wrong filetype "${doc.languageId}" with ${basename}, use javascriptreact as filetype to make tsserver work with react syntax.`)
+    } else {
+      window.showWarningMessage(`Possible wrong filetype "${doc.languageId}" with ${basename}, use typescriptreact as filetype to make tsserver work with react syntax.`)
+    }
+    warningShown = true
+  }
+}
+
 
 class SyncedBuffer {
 
@@ -63,6 +81,7 @@ class SyncedBuffer {
 
   public open(): void {
     let folder = workspace.getWorkspaceFolder(this.document.uri)
+    checkDocument(this.document)
     const args: Proto.OpenRequestArgs = {
       file: this.filepath,
       fileContent: this.document.getText(),
@@ -115,7 +134,7 @@ class SyncedBuffer {
 
   public onContentChanged(events: readonly TextDocumentContentChangeEvent[]): void {
     if (this.state !== BufferState.Open) {
-      console.error(`Unexpected buffer state: ${this.state}`)
+      this.client.logger.error(`Unexpected buffer state: ${this.state}`)
     }
     this.synchronizer.change(this.resource, this.filepath, events)
   }
@@ -237,7 +256,9 @@ class BufferSynchronizer {
           case BufferOperationType.Close: closedFiles.push(change.args); break
         }
       }
-      this.client.execute('updateOpen', { changedFiles, closedFiles, openFiles }, CancellationToken.None, { nonRecoverable: true })
+      this.client.execute('updateOpen', { changedFiles, closedFiles, openFiles }, CancellationToken.None, { nonRecoverable: true }).catch(e => {
+        this.client.logger.error(`Error on updateOpen:`, e)
+      })
       this._pending.clear()
     }
   }
@@ -295,7 +316,7 @@ class GetErrRequest {
     const supportsSyntaxGetErr = this.client.apiVersion.gte(API.v440)
     const allFiles = uris
       .filter(entry => supportsSyntaxGetErr || client.hasCapabilityForResource(entry, ClientCapability.Semantic))
-      .map(entry => client.normalizedPath(entry))
+      .map(entry => client.toTsFilePath(entry))
 
     if (!allFiles.length) {
       this._done = true
@@ -417,6 +438,16 @@ export default class BufferSyncSupport {
     return false
   }
 
+  public toResourceUri(resource: Uri): string {
+    const filepath = this.client.toTsFilePath(resource);
+    for (const buffer of this.syncedBuffers.allBuffers) {
+      if (buffer.filepath != null && typeof filepath === 'string' && buffer.filepath === filepath) {
+        return buffer.resource;
+      }
+    }
+    return resource.toString()
+  }
+
   public toResource(filePath: string): string {
     const buffer = this.syncedBuffers.getForPath(filePath)
     if (buffer) return buffer.resource
@@ -442,7 +473,7 @@ export default class BufferSyncSupport {
       return false
     }
     const resource = document.uri
-    const filepath = this.client.normalizedPath(Uri.parse(resource))
+    const filepath = this.client.toTsFilePath(Uri.parse(resource))
     if (!filepath) {
       return false
     }

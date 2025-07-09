@@ -38,7 +38,7 @@ For yarn2 ( >= v2.0.0-rc.36) user want to use local typescript module:
 
 Almost the same as VSCode.
 
-- Supports javascript & typescript and jsx/tsx.
+- Supports javascript & typescript and jsx/tsx (make sure the buffer filetype is typescriptreact or javascriptreact).
 - Installs typings automatically.
 - Commands to work with tsserver, including:
   - `tsserver.reloadProjects`
@@ -106,6 +106,7 @@ Checkout `:h coc-configuration` for guide of coc.nvim's configuration.
 
 - `tsserver.enable`: Enable running of tsserver. Default: `true`
 - `tsserver.tsconfigPath`: Path to tsconfig file for the `tsserver.watchBuild` command. Default: `"tsconfig.json"`
+- `tsserver.socketPath`: Socket path used to connect to tsserver, the socket should be opened already (use tools like socat to start server and pipe messages to sdtio of tsserver), when exists, command line arguments related configurations wont' works. Configure the path like \"127.0.0.1:7070\", Default: `null`.
 - `tsserver.locale`: Sets the locale used to report JavaScript and TypeScript errors. Defaults to use VS Code's locale. Default: `"auto"`
   Valid options: ["auto","de","es","en","fr","it","ja","ko","ru","zh-CN","zh-TW"]
 - `tsserver.useLocalTsdk`: Use tsserver from typescript module in workspace folder, ignore tsserver.tsdk configuration. Default: `false`
@@ -133,6 +134,7 @@ Checkout `:h coc-configuration` for guide of coc.nvim's configuration.
   Valid options: ["always","never","auto"]
 - `tsserver.experimental.enableProjectDiagnostics`: (Experimental) Enables project wide error reporting. Default: `false`
 - `typescript.check.npmIsInstalled`: Check if npm is installed for [Automatic Type Acquisition](https://code.visualstudio.com/docs/nodejs/working-with-javascript#_typings-and-automatic-type-acquisition). Default: `true`
+- `tsserver.disabledSchemes`: Document schemes that should be disabled for tsserver to avoid tsserver error. Default: `["git", "fugitive", "vsls", "diffview", "github", "azurerepos"]`
 - `typescript.showUnused`: Show unused variable hint. Default: `true`
 - `typescript.showDeprecated`: Show deprecated variable hint. Default: `true`
 - `typescript.updateImportsOnFileMove.enabled`: Enable/disable automatic updating of import paths when you rename or move a file in VS Code. Default: `"prompt"`
@@ -152,6 +154,7 @@ Checkout `:h coc-configuration` for guide of coc.nvim's configuration.
   Valid options: ["auto","single","double"]
 - `typescript.preferences.useAliasesForRenames`: Enable/disable introducing aliases for object shorthand properties during renames. Requires using TypeScript 3.4 or newer in the workspace. Default: `true`
 - `typescript.preferences.autoImportFileExcludePatterns`: Specify glob patterns of files to exclude from auto imports. Requires using TypeScript 4.8 or newer in the workspace.
+- `typescript.preferences.preferTypeOnlyAutoImports`: Include the `type` keyword in auto-imports whenever possible. Requires using TypeScript 5.3+ in the workspace.
 - `typescript.preferences.renameShorthandProperties`: Enable/disable introducing aliases for object shorthand properties during renames. Requires using TypeScript 3.4 or newer in the workspace. Default: `true`
 - `typescript.suggestionActions.enabled`: Enable/disable suggestion diagnostics for TypeScript files in the editor. Requires using TypeScript 2.8 or newer in the workspace. Default: `true`
 - `typescript.validate.enable`: Enable/disable TypeScript validation. Default: `true`
@@ -326,6 +329,15 @@ If you find any issues, please [create an
 issue](https://github.com/neoclide/coc-tsserver/issues/new).
 
 ## Q & A
+
+Q: React syntax not recognized by tsserver.
+
+A: Make sure to use `javascriptreact` and `typescriptreact` for buffer filetype.
+  ``` vim
+  autocmd BufNewFile,BufRead *.tsx setlocal filetype=typescriptreact
+  autocmd BufNewFile,BufRead *.jsx setlocal filetype=javascriptreact
+  ```
+  Add those autocmds to your vimrc.
 
 Q: Automatic type acquisition not work.
 

@@ -18,7 +18,7 @@ export class TypeScriptVersion {
   }
 
   public get tscPath(): string {
-    return path.resolve(this.path, '../bin/tsc')
+    return path.resolve(this.path, `../bin/tsc${process.platform == 'win32' ? '.exe' : ''}`)
   }
 
   public get tsServerPath(): string {
@@ -148,7 +148,6 @@ export class TypeScriptVersionProvider {
       return bundledVersion
     } catch (e) {
       window.showErrorMessage('Bundled typescript module not found')
-      console.error(`Bundled typescript module not found`)
       return null
     }
   }
