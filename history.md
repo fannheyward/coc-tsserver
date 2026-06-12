@@ -1,3 +1,7 @@
+# 2.3.2
+
+- Added `typescript.tsserverRequest` command and global plugin supports
+
 # 2.3.1
 
 - Added configuration `tsserver.socketPath` for standalone tsserver (not recommended).

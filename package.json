@@ -1,6 +1,6 @@
 {
-  "name": "coc-tsserver",
-  "version": "2.3.1",
+  "name": "coc-tsserver-dev",
+  "version": "2.3.2",
   "description": "javascript and typescript language features extension of coc.nvim",
   "main": "lib/index.js",
   "publisher": "chemzqm",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/neoclide/coc-tsserver.git"
+    "url": "git+https://github.com/fannheyward/coc-tsserver.git"
   },
   "keywords": [
     "coc.nvim",
@@ -1233,5 +1233,8 @@
   },
   "dependencies": {
     "typescript": "^5.8.3"
+  },
+  "allowScripts": {
+    "esbuild@0.25.9": true
   }
 }
